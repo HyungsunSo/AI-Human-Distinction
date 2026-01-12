@@ -1,0 +1,5 @@
+blank_issues_enabled: flase
+issue_templates:
+  - name: Feature Develop Report
+    description: Develop History Report
+    file: feature.md
