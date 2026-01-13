@@ -1,0 +1,40 @@
+# Environment files (API keys)
+.env
+.env.local
+.env.*.local
+
+# Data files (too large for git)
+*.csv
+!submissions/*.csv
+
+*.parquet
+*.pkl
+*.pickle
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Model checkpoints
+*.pt
+*.pth
+*.ckpt
+*.h5
+!colab_notebooks/*.csv
