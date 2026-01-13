@@ -6,10 +6,12 @@
 # Data files (too large for git)
 *.csv
 !submissions/*.csv
+!colab_notebooks/*.csv
 
 *.parquet
 *.pkl
 *.pickle
+*.xlsx
 
 # Jupyter checkpoints
 .ipynb_checkpoints/
@@ -37,4 +39,8 @@ env/
 *.pth
 *.ckpt
 *.h5
-!colab_notebooks/*.csv
+checkpoints/
+
+# Notes
+note.py
+note.ipynb
