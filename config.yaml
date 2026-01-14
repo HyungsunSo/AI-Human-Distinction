@@ -3,11 +3,10 @@ data:
   test_data_path: "./data/test.csv"
 
 model:
-  model_name: "klue/bert-base"
+  model_name: "LGAI-EXAONE/EXAONE-3.5-2.4B-Instruct"
   h_param: 
     max_length: 512
     
-
 train:
   output_dir: "./outputs"
   eval_strategy: "epoch"
@@ -21,3 +20,23 @@ train:
   weight_decay: 0.01
   warmup_ratio: 0.06
   metric_for_best_model: "f1"
+
+lora:
+  r: 16
+  lora_alpha: 32
+  lora_dropout: 0.05
+  bias: "none"
+  task_type: "CAUSAL_LM"
+  target_modules: ["q_proj", "k_proj", "v_proj", "o_proj"]
+
+sft_config:
+  output_dir: "./exaone"
+  per_device_batch_size: 2
+  gradient_accumulation_steps: 8
+  lr: 2e-4
+  epochs: 3
+  logging_steps: 10
+  save_steps: 200
+
+inference:
+  inference_model_dir: "./outputs/klue_bert_cls"

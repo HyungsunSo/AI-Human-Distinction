@@ -45,7 +45,7 @@ class Train():
             "f1": f1_score(labels, preds)
         }
     
-    def train(self, train_dataset, valid_dataset, data_collator):
+    def train_bert(self, train_dataset, valid_dataset, data_collator):
         trainer = Trainer(
             model = self.model,
             args = self.training_args,
@@ -56,3 +56,4 @@ class Train():
         )
         trainer.train()
         return
+    
