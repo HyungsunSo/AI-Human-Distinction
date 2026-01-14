@@ -13,6 +13,7 @@ backend/
 ├── model_loader.py      # 모델 체크포인트 관리
 ├── inference.py         # 추론 서비스 (문단 분석, LOO)
 ├── lime_analyzer.py     # LIME 분석, 신뢰도 검증
+├── meta_analyzer.py     # 문체 분석 (EDA 기반 통계 지문)
 ├── schemas.py           # Pydantic 요청/응답 모델
 └── requirements.txt     # Python 의존성
 ```
@@ -57,6 +58,13 @@ backend/
 │  5. Deletion Test (신뢰도 검증)           │
 │     - LIME 상위 토큰 삭제 후 확률 변화     │
 │     - 크게 하락 → 설명 신뢰도 높음         │
+└─────────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────────┐
+│  6. 문체 분석 (Stylistic Fingerprint)    │
+│     - EDA 기반 5대 지표 통계 비교          │
+│     - Human/AI 분포 대비 p-value 산출      │
 └─────────────────────────────────────────┘
     │
     ▼
@@ -135,6 +143,20 @@ backend/
     "drop": 0.31,
     "reliability": "high",
     "removed_tokens": ["혁명적인", "근본적으로"]
+  },
+  "meta_analysis": {
+    "features": [
+      {
+        "feature_name": "comma_density",
+        "display_name": "쉼표 밀도 (100자당)",
+        "value": 0.72,
+        "human_stats": {"mean": 1.10, "std": 0.60},
+        "ai_stats": {"mean": 0.72, "std": 0.49},
+        "p_value": 0.04,
+        "interpretation": "이 피처는 AI 그룹의 평균치에 더 가깝습니다."
+      }
+    ],
+    "overall_interpretation": "주요 5개 지표 중 4개가 AI 패턴을 보입니다."
   }
 }
 ```
@@ -166,6 +188,12 @@ backend/
 | `explain_text(text)` | 텍스트 | LIME 토큰 리스트 |
 | `deletion_test(text, lime_result)` | 텍스트, LIME 결과 | 삭제 테스트 결과 |
 | `full_analysis(text)` | 텍스트 | LIME + Deletion Test |
+
+### `meta_analyzer.py`
+| 함수 | 입력 | 출력 |
+|------|------|------|
+| `extract_features(text)` | 텍스트 | 5대 문체 지표 dict |
+| `analyze(text)` | 텍스트 | 통계적 비교 결과 (MetaAnalysisResult) |
 
 ---
 

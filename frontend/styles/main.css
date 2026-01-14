@@ -532,6 +532,85 @@ body {
     text-decoration: line-through;
 }
 
+/* Stylistic Meta Analysis Section */
+.meta-section {
+    background: var(--bg-tertiary);
+    border-top: 1px solid var(--border-subtle);
+    padding: var(--space-xl);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: var(--space-xl);
+}
+
+.section-title {
+    font-size: 13px;
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+}
+
+.overall-interpretation {
+    font-size: 11px;
+    color: var(--accent);
+    font-style: italic;
+}
+
+.meta-charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--space-xl);
+}
+
+.meta-chart-card {
+    background: var(--bg-secondary);
+    padding: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.meta-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.meta-chart-title {
+    font-size: 11px;
+    font-weight: var(--font-weight-medium);
+    color: var(--text-secondary);
+}
+
+.p-value-badge {
+    font-size: 10px;
+    font-family: var(--font-mono);
+    padding: 2px 8px;
+    background: var(--bg-tertiary);
+    color: var(--accent);
+    border-radius: 4px;
+}
+
+.p-value-badge.warning {
+    color: var(--ai-color);
+    background: var(--ai-muted);
+}
+
+.canvas-container {
+    height: 120px;
+    position: relative;
+}
+
+.meta-insight {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    border-left: 2px solid var(--border-color);
+    padding-left: var(--space-md);
+}
+
 /* Scrollbar - Minimal */
 ::-webkit-scrollbar {
     width: 4px;

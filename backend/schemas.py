@@ -55,6 +55,29 @@ class DeletionTest(BaseModel):
     removed_tokens: List[str]
 
 
+class FeatureStats(BaseModel):
+    """Mean and Std for a feature distribution"""
+    mean: float
+    std: float
+
+
+class MetaFeatureResult(BaseModel):
+    """Detailed statistical comparison for a single feature"""
+    feature_name: str
+    display_name: str
+    value: float
+    human_stats: FeatureStats
+    ai_stats: FeatureStats
+    p_value: float  # probability of observing this value under human distribution
+    interpretation: str
+
+
+class MetaAnalysisResult(BaseModel):
+    """Collection of stylistic feature analysis"""
+    features: List[MetaFeatureResult]
+    overall_interpretation: str
+
+
 class AnalyzeResponse(BaseModel):
     """Full analysis response"""
     prediction: str  # "AI" or "Human"
@@ -63,6 +86,7 @@ class AnalyzeResponse(BaseModel):
     top_paragraph: TopParagraph
     lime_result: LimeResult
     deletion_test: DeletionTest
+    meta_analysis: Optional[MetaAnalysisResult] = None
 
 
 class CheckpointListResponse(BaseModel):

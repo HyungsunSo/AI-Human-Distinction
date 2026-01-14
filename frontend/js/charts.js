@@ -179,6 +179,112 @@ class ChartManager {
             }
         });
     }
+
+    renderDistributionCharts(metaAnalysis) {
+        const container = document.getElementById('metaChartsGrid');
+        if (!container) return;
+
+        // Clear existing charts
+        container.innerHTML = '';
+        this.distributionCharts = this.distributionCharts || {};
+
+        metaAnalysis.features.forEach(feat => {
+            const chartId = `chart_${feat.feature_name}`;
+
+            // Create card
+            const card = document.createElement('div');
+            card.className = 'meta-chart-card';
+            card.innerHTML = `
+                <div class="meta-chart-header">
+                    <span class="meta-chart-title">${feat.display_name}</span>
+                    <span class="p-value-badge ${feat.p_value < 0.05 ? 'warning' : ''}">p = ${feat.p_value.toFixed(3)}</span>
+                </div>
+                <div class="canvas-container">
+                    <canvas id="${chartId}"></canvas>
+                </div>
+                <div class="meta-insight">${feat.interpretation}</div>
+            `;
+            container.appendChild(card);
+
+            const ctx = document.getElementById(chartId).getContext('2d');
+
+            // Generate distribution data
+            const minX = Math.min(feat.human_stats.mean - 2 * feat.human_stats.std, feat.ai_stats.mean - 2 * feat.ai_stats.std, feat.value);
+            const maxX = Math.max(feat.human_stats.mean + 2 * feat.human_stats.std, feat.ai_stats.mean + 2 * feat.ai_stats.std, feat.value);
+
+            const humanDist = this._generateNormalDist(feat.human_stats.mean, feat.human_stats.std, minX, maxX);
+            const aiDist = this._generateNormalDist(feat.ai_stats.mean, feat.ai_stats.std, minX, maxX);
+
+            if (this.distributionCharts[chartId]) this.distributionCharts[chartId].destroy();
+
+            this.distributionCharts[chartId] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Human',
+                            data: humanDist,
+                            borderColor: this.colors.human,
+                            backgroundColor: this.colors.humanMuted || 'rgba(120, 224, 143, 0.1)',
+                            fill: true,
+                            pointRadius: 0,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'AI',
+                            data: aiDist,
+                            borderColor: this.colors.ai,
+                            backgroundColor: this.colors.aiMuted || 'rgba(229, 80, 57, 0.1)',
+                            fill: true,
+                            pointRadius: 0,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Current',
+                            data: [{ x: feat.value, y: 0 }, { x: feat.value, y: Math.max(...humanDist.map(d => d.y), ...aiDist.map(d => d.y)) * 0.8 }],
+                            borderColor: this.colors.accent,
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            pointRadius: 0,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    },
+                    scales: {
+                        y: { display: false },
+                        x: {
+                            type: 'linear',
+                            grid: { color: this.colors.grid }
+                        }
+                    }
+                }
+            });
+        });
+
+        // Overall Interpretation
+        const interpretationEl = document.getElementById('overallInterpretation');
+        if (interpretationEl) {
+            interpretationEl.textContent = metaAnalysis.overall_interpretation;
+        }
+    }
+
+    _generateNormalDist(mean, std, min, max, steps = 60) {
+        const data = [];
+        const stepSize = (max - min) / steps;
+        for (let x = min; x <= max; x += stepSize) {
+            const y = (1 / (std * Math.sqrt(2 * Math.PI))) *
+                Math.exp(-0.5 * Math.pow((x - mean) / std, 2));
+            data.push({ x, y });
+        }
+        return data;
+    }
 }
 
 const chartManager = new ChartManager();

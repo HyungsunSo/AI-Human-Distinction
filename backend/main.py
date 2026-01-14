@@ -15,6 +15,7 @@ from .schemas import (
 from .model_loader import model_loader
 from .inference import inference_service
 from .lime_analyzer import lime_analyzer
+from .meta_analyzer import meta_analyzer
 
 
 # Create FastAPI app
@@ -130,7 +131,8 @@ async def analyze_text(request: AnalyzeRequest):
         paragraphs=paragraphs,
         top_paragraph=top_paragraph,
         lime_result=LimeResult(tokens=lime_tokens),
-        deletion_test=deletion_test
+        deletion_test=deletion_test,
+        meta_analysis=meta_analyzer.analyze(text)
     )
 
 

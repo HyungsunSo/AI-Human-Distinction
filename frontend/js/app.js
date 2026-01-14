@@ -178,6 +178,11 @@ class AITextDetector {
         chartManager.renderParagraphChart(result.paragraphs, result.top_paragraph.index);
         chartManager.renderImportanceChart(result.paragraphs);
 
+        // Stylistic Analysis
+        if (result.meta_analysis) {
+            chartManager.renderDistributionCharts(result.meta_analysis);
+        }
+
         // LIME Section
         this.limeSubtitle.textContent = `Paragraph ${result.top_paragraph.index + 1}`;
         this.renderLimeTokens(result.top_paragraph.text, result.lime_result.tokens);

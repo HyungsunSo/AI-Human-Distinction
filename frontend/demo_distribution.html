@@ -12,6 +12,20 @@
             padding: 20px;
             max-width: 1200px;
             margin: 0 auto;
+            overflow-y: auto;
+            /* Ensure dashboard is scrollable if container is fixed */
+        }
+
+        /* Override main.css overflow hidden for this demo */
+        html,
+        body {
+            overflow: auto !important;
+            height: auto !important;
+        }
+
+        .app-container {
+            height: auto !important;
+            min-height: 100vh;
         }
 
         .dist-card {
