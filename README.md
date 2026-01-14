@@ -1,65 +1,62 @@
-# 프로젝트 개요
+# 🤖 AI-Human Distinction: Stylistic & Deep Learning Dashboard
 
-### 프로젝트 주제
-AI가 작성한 글과 Human이 작성한 글에 대해 AI모델이 어떤 근거에서 AI인지 판단하는 모델을 구축한 프로젝트입니다.(AI-Human-Distinction)
-
-### 데이터 및 프로젝트 출처
-[DACON 2025 SW중심대학 디지털 경진대회 : AI부문](https://dacon.io/competitions/official/236473/overview/description)
-
-<br>
+본 프로젝트는 BERT 기반의 딥러닝 탐지와 EDA 기반의 통계적 문체 분석을 결합하여, 한국어 텍스트의 AI 생성 여부를 다각도로 판별하는 통합 대시보드 시스템입니다.
 
 ---
 
-# 프로젝트 설명
+## 🏗️ 시스템 아키텍처
 
-### 프로젝트 결과
+시스템은 두 가지 핵심 엔진의 하이브리드 방식으로 동작합니다.
 
+### 1. BERT Deep Learning Engine (Contextual)
+- **Hierarchical Analysis**: 문단 단위로 쪼개어 각각 AI 확률을 계산한 뒤, 가장 의심스러운 문단을 선정합니다.
+- **Explainability (LIME)**: 선정된 문단 내에서 어떤 단어가 AI 또는 사람의 특징인지 토큰 레벨에서 시각화합니다.
+- **Reliability (Deletion Test)**: 핵심 단어를 제거했을 때 모델의 점수 하락폭을 측정하여 분석 결과의 신뢰도를 검증합니다.
 
-### 프로젝트 구조
+### 2. Stylistic Fingerprint Engine (Statistical)
+- **Real Stats Based**: `open/train_with_all_features.csv`에서 추출한 **실제 데이터의 5대 핵심 지표(쉼표 밀도, 문장 길이, 조사/어미 밀도, 어휘 다양성)** 통계치를 사용합니다.
+- **Comparative Distribution**: 전체 Human/AI 데이터 분포 내에서 현재 입력된 텍스트가 어느 위치에 있는지 p-value와 함께 보여줍니다.
 
-```
-.
-├── colab_notebooks/ # Google Colab 실험 및 분석 노트북
-│   ├── bert_paragraph_classifier.ipynb
-│   ├── explainability_analysis_colab.ipynb
-│   ├── gpt_oss_synthetic_pairs.ipynb
-│   ├── paragraph_maxpool_colab.ipynb
-│   ├── style_trajectory_analysis.ipynb
-│   └── README.md
-│
-├── data/ # 학습 및 평가 데이터
-│   ├── train.csv
-│   ├── test.csv
-│   └── sample_submission.csv
-│
-├── data_generation/ # 데이터 생성 관련 노트북
-│   ├── ai_generation.ipynb
-│   ├── hyperclova_generation.ipynb
-│   ├── paragraph_splitting.ipynb
-│   └── MODEL_GUIDE.md
-│
-├── outputs/ # 모델 출력 및 결과물
-│
-├── app.py # 애플리케이션 엔트리포인트
-├── main.py # 메인 실행 스크립트
-├── train.py # 모델 학습 로직
-├── dataset.py # Dataset / DataLoader 정의
-├── utils.py # 공용 유틸리티 함수
-├── exaone.py # EXAONE 관련 로직
-├── note.ipynb # 임시 실험용 노트북
-├── note.py # 임시 테스트 스크립트
-│
-├── config.yaml # 전체 설정 파일
-├── README.md  # 프로젝트 개요
-├── .gitignore
-└── .github/ # GitHub 설정
-    ├── ISSUE_TEMPLATE/
-    └── PULL_REQUEST_TEMPLATE.md
+---
+
+## 📡 API Endpoints (Backend)
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/analyze` | POST | 텍스트 입력 및 전체 분석 결과(딥러닝 + 문체) 반환 |
+| `/checkpoints` | GET | 사용 가능한 모델 체크포인트 목록 조회 |
+| `/checkpoints/load` | POST | 특정 가중치 모델 로드 |
+
+### /analyze 응답 구조 예시
+```json
+{
+  "prediction": "AI",
+  "confidence": 0.92,
+  "paragraphs": [...],
+  "top_paragraph": {...},
+  "lime_result": {"tokens": [...]},
+  "deletion_test": {"reliability": "high", ...},
+  "meta_analysis": {
+    "features": [
+      {
+        "display_name": "쉼표 밀도",
+        "value": 0.75,
+        "p_value": 0.03,
+        "interpretation": "AI 패턴에 가깝습니다."
+      }
+    ]
+  }
+}
 ```
 
-## 기술 스택
-- Python
-- Machine Learning / Deep Learning
+---
 
-## 업데이트
-- 2026-01-12: 프로젝트 README 업데이트
+## 📊 데이터 소스 및 신뢰성 안내
+- **더미 데이터 여부**: `meta_analyzer.py`에 정의된 상수는 EDA 노트북을 통해 `train_with_all_features.csv`에서 직접 산출한 **실제 통계값**입니다.
+- **모델 신뢰도**: LIME 엔진과 삭제 테스트를 통해 인공지능이 "왜" 그렇게 판단했는지에 대한 논리적 근거를 제공합니다.
+
+---
+
+## 🚀 시작하기
+- **백엔드**: `cd backend && uvicorn main:app --reload`
+- **프론트엔드**: `cd frontend && python3 -m http.server 3000` (OR VSCode Live Server)

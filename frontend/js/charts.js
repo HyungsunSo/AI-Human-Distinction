@@ -208,9 +208,16 @@ class ChartManager {
 
             const ctx = document.getElementById(chartId).getContext('2d');
 
-            // Generate distribution data
-            const minX = Math.min(feat.human_stats.mean - 2 * feat.human_stats.std, feat.ai_stats.mean - 2 * feat.ai_stats.std, feat.value);
-            const maxX = Math.max(feat.human_stats.mean + 2 * feat.human_stats.std, feat.ai_stats.mean + 2 * feat.ai_stats.std, feat.value);
+            // Check if this feature uses log transformation (detect by feature name)
+            const logFeatures = ['sent_len_median', 'comma_density', 'repeat_ratio_mean'];
+            const isLogTransformed = logFeatures.includes(feat.feature_name);
+
+            // Transform the user's value if needed for proper positioning on the chart
+            const displayValue = isLogTransformed ? Math.log1p(feat.value) : feat.value;
+
+            // Generate distribution data with 3 std range
+            const minX = Math.min(feat.human_stats.mean - 3 * feat.human_stats.std, feat.ai_stats.mean - 3 * feat.ai_stats.std, displayValue);
+            const maxX = Math.max(feat.human_stats.mean + 3 * feat.human_stats.std, feat.ai_stats.mean + 3 * feat.ai_stats.std, displayValue);
 
             const humanDist = this._generateNormalDist(feat.human_stats.mean, feat.human_stats.std, minX, maxX);
             const aiDist = this._generateNormalDist(feat.ai_stats.mean, feat.ai_stats.std, minX, maxX);
@@ -241,7 +248,7 @@ class ChartManager {
                         },
                         {
                             label: 'Current',
-                            data: [{ x: feat.value, y: 0 }, { x: feat.value, y: Math.max(...humanDist.map(d => d.y), ...aiDist.map(d => d.y)) * 0.8 }],
+                            data: [{ x: displayValue, y: 0 }, { x: displayValue, y: Math.max(...humanDist.map(d => d.y), ...aiDist.map(d => d.y)) * 0.8 }],
                             borderColor: this.colors.accent,
                             borderWidth: 2,
                             borderDash: [5, 5],
