@@ -1,6 +1,5 @@
 /**
- * Charts Module for AI Text Detector
- * Dark theme compatible
+ * Charts Module - Minimal Style
  */
 
 class ChartManager {
@@ -8,32 +7,28 @@ class ChartManager {
         this.paragraphChart = null;
         this.importanceChart = null;
 
-        // Dark theme colors
+        // Minimal color palette
         this.colors = {
-            ai: '#f85149',
-            aiBg: 'rgba(248, 81, 73, 0.3)',
-            human: '#3fb950',
-            humanBg: 'rgba(63, 185, 80, 0.3)',
-            warning: '#d29922',
-            warningBg: 'rgba(210, 153, 34, 0.3)',
-            accent: '#58a6ff',
-            accentBg: 'rgba(88, 166, 255, 0.3)',
-            text: '#8b949e',
-            grid: 'rgba(48, 54, 61, 0.5)'
+            ai: '#e55039',
+            aiBg: 'rgba(229, 80, 57, 0.6)',
+            human: '#78e08f',
+            humanBg: 'rgba(120, 224, 143, 0.6)',
+            warning: '#f6b93b',
+            warningBg: 'rgba(246, 185, 59, 0.6)',
+            accent: '#4a90d9',
+            accentBg: 'rgba(74, 144, 217, 0.6)',
+            text: '#666666',
+            grid: 'rgba(255, 255, 255, 0.05)'
         };
 
-        // Chart.js global defaults for dark theme
+        // Minimal chart defaults
         Chart.defaults.color = this.colors.text;
-        Chart.defaults.borderColor = this.colors.grid;
+        Chart.defaults.borderColor = 'transparent';
+        Chart.defaults.font.family = "'SF Mono', 'Monaco', monospace";
+        Chart.defaults.font.size = 10;
     }
 
     getColorByProb(prob) {
-        if (prob >= 0.7) return this.colors.ai;
-        if (prob >= 0.5) return this.colors.warning;
-        return this.colors.human;
-    }
-
-    getBgByProb(prob) {
         if (prob >= 0.7) return this.colors.aiBg;
         if (prob >= 0.5) return this.colors.warningBg;
         return this.colors.humanBg;
@@ -43,12 +38,15 @@ class ChartManager {
         const ctx = document.getElementById('paragraphChart');
         if (!ctx) return;
 
+        // Dynamic height based on paragraph count
+        const barHeight = 24;
+        const minHeight = 80;
+        const calculatedHeight = Math.max(minHeight, paragraphs.length * barHeight);
+        ctx.parentElement.style.height = `${calculatedHeight}px`;
+
         const labels = paragraphs.map((_, i) => `P${i + 1}`);
         const data = paragraphs.map(p => p.ai_prob);
         const bgColors = paragraphs.map((p, i) =>
-            i === topIndex ? this.colors.ai : this.getBgByProb(p.ai_prob)
-        );
-        const borderColors = paragraphs.map((p, i) =>
             i === topIndex ? this.colors.ai : this.getColorByProb(p.ai_prob)
         );
 
@@ -61,9 +59,9 @@ class ChartManager {
                 datasets: [{
                     data,
                     backgroundColor: bgColors,
-                    borderColor: borderColors,
-                    borderWidth: 2,
-                    borderRadius: 4
+                    borderWidth: 0,
+                    borderRadius: 0,
+                    barThickness: 16
                 }]
             },
             options: {
@@ -73,8 +71,14 @@ class ChartManager {
                 plugins: {
                     legend: { display: false },
                     tooltip: {
+                        backgroundColor: '#1a1a1a',
+                        titleColor: '#ffffff',
+                        bodyColor: '#999999',
+                        borderWidth: 0,
+                        padding: 8,
+                        cornerRadius: 0,
                         callbacks: {
-                            label: (ctx) => `${(ctx.raw * 100).toFixed(1)}% AI`
+                            label: (ctx) => `${(ctx.raw * 100).toFixed(0)}%`
                         }
                     }
                 },
@@ -82,10 +86,19 @@ class ChartManager {
                     x: {
                         min: 0,
                         max: 1,
-                        grid: { color: this.colors.grid },
-                        ticks: { callback: (v) => `${(v * 100)}%` }
+                        grid: {
+                            color: this.colors.grid,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            callback: (v) => `${(v * 100)}%`,
+                            maxTicksLimit: 5
+                        }
                     },
-                    y: { grid: { display: false } }
+                    y: {
+                        grid: { display: false },
+                        ticks: { padding: 4 }
+                    }
                 },
                 onClick: (event, elements) => {
                     if (elements.length > 0) {
@@ -102,12 +115,17 @@ class ChartManager {
         const ctx = document.getElementById('importanceChart');
         if (!ctx) return;
 
+        // Dynamic height based on paragraph count
+        const barHeight = 24;
+        const minHeight = 80;
+        const calculatedHeight = Math.max(minHeight, paragraphs.length * barHeight);
+        ctx.parentElement.style.height = `${calculatedHeight}px`;
+
         const labels = paragraphs.map((_, i) => `P${i + 1}`);
         const data = paragraphs.map(p => p.importance);
         const maxImp = Math.max(...data);
 
-        const bgColors = data.map(v => v === maxImp ? this.colors.aiBg : this.colors.accentBg);
-        const borderColors = data.map(v => v === maxImp ? this.colors.ai : this.colors.accent);
+        const bgColors = data.map(v => v === maxImp ? this.colors.accent : this.colors.accentBg);
 
         if (this.importanceChart) this.importanceChart.destroy();
 
@@ -118,9 +136,9 @@ class ChartManager {
                 datasets: [{
                     data,
                     backgroundColor: bgColors,
-                    borderColor: borderColors,
-                    borderWidth: 2,
-                    borderRadius: 4
+                    borderWidth: 0,
+                    borderRadius: 0,
+                    barThickness: 16
                 }]
             },
             options: {
@@ -130,6 +148,12 @@ class ChartManager {
                 plugins: {
                     legend: { display: false },
                     tooltip: {
+                        backgroundColor: '#1a1a1a',
+                        titleColor: '#ffffff',
+                        bodyColor: '#999999',
+                        borderWidth: 0,
+                        padding: 8,
+                        cornerRadius: 0,
                         callbacks: {
                             label: (ctx) => `${(ctx.raw * 100).toFixed(1)}%`
                         }
@@ -138,10 +162,19 @@ class ChartManager {
                 scales: {
                     x: {
                         min: 0,
-                        grid: { color: this.colors.grid },
-                        ticks: { callback: (v) => `${(v * 100).toFixed(0)}%` }
+                        grid: {
+                            color: this.colors.grid,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            callback: (v) => `${(v * 100).toFixed(0)}%`,
+                            maxTicksLimit: 5
+                        }
                     },
-                    y: { grid: { display: false } }
+                    y: {
+                        grid: { display: false },
+                        ticks: { padding: 4 }
+                    }
                 }
             }
         });
