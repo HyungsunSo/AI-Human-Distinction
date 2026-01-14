@@ -130,22 +130,38 @@ class AITextDetector {
     }
 
     renderLimeTokens(text, tokens) {
+        // Build a map of token scores
         const tokenMap = new Map();
-        tokens.forEach(t => tokenMap.set(t.word.toLowerCase(), t.score));
+        tokens.forEach(t => tokenMap.set(t.word, t.score));
 
-        const words = text.split(/(\s+)/);
+        // Find max score for normalization
+        const maxScore = Math.max(...tokens.map(t => Math.abs(t.score)), 0.1);
+
+        // Split text by whitespace and render in original order
+        const words = text.split(/\s+/);
         const html = words.map(word => {
-            if (/^\s+$/.test(word)) return word;
+            const cleanWord = word.replace(/[.,!?;:'"()]/g, '');
+            const score = tokenMap.get(word) ?? tokenMap.get(cleanWord);
 
-            const cleanWord = word.replace(/[.,!?;:'"()]/g, '').toLowerCase();
-            const score = tokenMap.get(cleanWord);
+            if (score !== undefined && Math.abs(score) > 0.005) {
+                // Calculate opacity based on score (0.1 to 0.95 for maximum visible difference)
+                const normalizedScore = Math.abs(score) / maxScore;
+                const bgOpacity = 0.1 + normalizedScore * 0.85;
+                const textOpacity = 0.5 + normalizedScore * 0.5;
 
-            if (score !== undefined) {
-                const cls = score > 0.05 ? 'ai' : score < -0.05 ? 'human' : 'neutral';
-                return `<span class="token ${cls}" title="${score.toFixed(3)}">${word}</span>`;
+                // AI (positive) = coral/red, Human (negative) = green  
+                const color = score > 0
+                    ? `rgba(255, 138, 122, ${textOpacity})`
+                    : `rgba(142, 245, 176, ${textOpacity})`;
+                const bgColor = score > 0
+                    ? `rgba(255, 100, 80, ${bgOpacity})`
+                    : `rgba(100, 230, 150, ${bgOpacity})`;
+
+                return `<span class="token" style="color: ${color}; background: ${bgColor}; font-weight: 600;" title="Score: ${score.toFixed(3)}">${word}</span>`;
             }
+
             return `<span class="token neutral">${word}</span>`;
-        }).join('');
+        }).join(' ');
 
         this.limeTokens.innerHTML = html;
     }
@@ -163,10 +179,13 @@ class AITextDetector {
     }
 
     highlightParagraphs(paragraphs) {
+        const topIdx = this.currentResult?.top_paragraph?.index ?? -1;
+
         // Build highlighted paragraphs
         const html = paragraphs.map((p, index) => {
-            const cls = this.getHighlightClass(p.ai_prob);
-            return `<div class="para-highlight ${cls}" data-index="${index}">
+            const probClass = this.getHighlightClass(p.ai_prob);
+            const limeClass = index === topIdx ? 'lime-target' : '';
+            return `<div class="para-highlight ${probClass} ${limeClass}" data-index="${index}">
                 <span class="para-prob">[${(p.ai_prob * 100).toFixed(0)}%]</span> ${this.escapeHtml(p.text)}
             </div>`;
         }).join('');

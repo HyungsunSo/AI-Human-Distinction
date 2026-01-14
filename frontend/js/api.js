@@ -6,7 +6,7 @@
 const API_BASE_URL = 'http://localhost:8000';
 
 // Mock mode flag - set to false when backend is ready
-const USE_MOCK_DATA = true;
+const USE_MOCK_DATA = false;
 
 /**
  * Mock data for development
