@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Text Detector</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <h1 class="app-title">🔍 AI Text Detector</h1>
+            </div>
+            <div class="header-center">
+                <select id="checkpointSelect" class="checkpoint-select">
+                    <option value="best_model.pt">best_model.pt</option>
+                    <option value="mil_model.pt">mil_model.pt</option>
+                    <option value="epoch3.pt">epoch3.pt</option>
+                </select>
+            </div>
+            <div class="header-right">
+                <button id="uploadBtn" class="btn btn-ghost">
+                    <span class="icon">📁</span>
+                </button>
+                <button id="analyzeBtn" class="btn btn-primary">
+                    Analyze
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Dashboard -->
+        <main class="dashboard">
+            <!-- Left: Text Input with Highlighting -->
+            <section class="panel text-panel">
+                <div class="panel-label">Input Document</div>
+                <div id="textDisplay" class="text-display" contenteditable="true"
+                    data-placeholder="Paste or type your document here..."></div>
+                <input type="file" id="fileInput" accept=".txt" hidden>
+            </section>
+
+            <!-- Right: Results Panel -->
+            <section class="panel results-panel">
+                <!-- Empty State -->
+                <div id="emptyState" class="empty-state">
+                    <div class="empty-icon">📄</div>
+                    <p>Enter text and click <strong>Analyze</strong></p>
+                </div>
+
+                <!-- Results (hidden until analysis) -->
+                <div id="resultsContent" class="results-content hidden">
+                    <!-- Top Row: Prediction + Key Stats -->
+                    <div class="stats-row">
+                        <!-- Prediction Badge -->
+                        <div class="stat-card prediction-badge" id="predictionCard">
+                            <div class="prediction-label" id="predictionLabel">AI</div>
+                            <div class="confidence-value" id="confidenceValue">87%</div>
+                        </div>
+
+                        <!-- Key Paragraph -->
+                        <div class="stat-card">
+                            <div class="stat-title">Key Paragraph</div>
+                            <div class="stat-main" id="keyParagraphNum">P1</div>
+                            <div class="stat-sub" id="keyParagraphProb">92% AI</div>
+                        </div>
+
+                        <!-- Reliability -->
+                        <div class="stat-card">
+                            <div class="stat-title">Reliability</div>
+                            <div class="stat-main" id="reliabilityIcon">✅</div>
+                            <div class="stat-sub" id="reliabilityText">High</div>
+                        </div>
+
+                        <!-- Prob Drop -->
+                        <div class="stat-card">
+                            <div class="stat-title">Prob Drop</div>
+                            <div class="stat-main" id="probDrop">-31%</div>
+                            <div class="stat-sub">after deletion</div>
+                        </div>
+                    </div>
+
+                    <!-- Middle: Charts Row -->
+                    <div class="charts-row">
+                        <div class="chart-card">
+                            <div class="chart-title">Paragraph AI Probability</div>
+                            <canvas id="paragraphChart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <div class="chart-title">Importance (LOO)</div>
+                            <canvas id="importanceChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Bottom: LIME Token Analysis -->
+                    <div class="lime-section">
+                        <div class="lime-header">
+                            <span class="lime-title">🔬 LIME Token Analysis</span>
+                            <span class="lime-subtitle" id="limeSubtitle">Paragraph 1</span>
+                        </div>
+                        <div class="lime-legend">
+                            <span class="legend-item"><span class="legend-dot ai"></span>AI Indicator</span>
+                            <span class="legend-item"><span class="legend-dot human"></span>Human Indicator</span>
+                        </div>
+                        <div class="lime-tokens" id="limeTokens">
+                            <!-- LIME highlighted text will be rendered here -->
+                        </div>
+                        <div class="deleted-tokens" id="deletedTokens">
+                            <!-- Deleted tokens for reliability test -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/lime.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
