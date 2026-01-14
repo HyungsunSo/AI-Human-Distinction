@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Text Detector - Meta Analysis Demo</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .meta-dashboard {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .dist-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .p-value-badge {
+            background: #eff6ff;
+            color: #2563eb;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .p-value-badge.warning {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .insight-box {
+            background: #f8fafc;
+            border-left: 4px solid #3b82f6;
+            padding: 16px;
+            margin-top: 10px;
+            font-size: 0.95rem;
+            color: #475569;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1 class="app-title">📊 문체 분석 데모 (Stylistic Analysis)</h1>
+        </header>
+
+        <main class="meta-dashboard">
+            <div class="dist-card">
+                <h2>문체 지문 분석 (Stylistic Fingerprint)</h2>
+                <p style="color: #64748b; margin-bottom: 20px;">
+                    입력된 문서의 문체적 특징(문장 길이, 구두점 등)이 Human vs AI 분포 중 어디에 더 가까운지 분석합니다.
+                </p>
+
+                <div class="grid-2">
+                    <!-- Chart 1: Comma Density -->
+                    <div>
+                        <div class="chart-header">
+                            <span class="chart-title">쉼표 밀도 (Comma Density)</span>
+                            <span class="p-value-badge warning">p < 0.01 (AI-like)</span>
+                        </div>
+                        <canvas id="commaChart"></canvas>
+                        <div class="insight-box">
+                            <strong>분석:</strong> 입력 문서의 쉼표 밀도(0.5)는
+                            <span style="color: #dc2626; font-weight: bold;">AI 평균(0.72)</span>과 매우 유사하며,
+                            Human 평균(1.10)보다는 현저히 낮습니다.
+                        </div>
+                    </div>
+
+                    <!-- Chart 2: Sentence Length Consistency -->
+                    <div>
+                        <div class="chart-header">
+                            <span class="chart-title">문장 길이 중앙값 (Sentence Median)</span>
+                            <span class="p-value-badge">p = 0.32 (Neutral)</span>
+                        </div>
+                        <canvas id="sentChart"></canvas>
+                        <div class="insight-box">
+                            <strong>분석:</strong> 문장 길이(12.5자)는 Human(13.5)과 AI(11.8)의
+                            중간 영역에 위치하여 결정적인 단서가 되지 않습니다.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dist-card">
+                <div class="chart-header">
+                    <span class="chart-title">종합 AI 확률 분포 (MIL Score Distribution)</span>
+                </div>
+                <!-- Chart 3: Score Distribution -->
+                <canvas id="scoreChart" height="100"></canvas>
+                <div class="insight-box" style="border-left-color: #10b981;">
+                    <strong>종합 판정:</strong> 문체적 특징들은 다소 모호하나,
+                    <span style="color: #059669; font-weight: bold;">딥러닝 모델(MIL)</span>은
+                    문맥 패턴을 기반으로 92% 확률로 AI를 지목했습니다.
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Normal Distribution Data Generator
+        function generateNormalDist(mean, std, min, max, steps = 100) {
+            const data = [];
+            const stepSize = (max - min) / steps;
+            for (let x = min; x <= max; x += stepSize) {
+                const y = (1 / (std * Math.sqrt(2 * Math.PI))) *
+                    Math.exp(-0.5 * Math.pow((x - mean) / std, 2));
+                data.push({ x, y });
+            }
+            return data;
+        }
+
+        const commonOptions = {
+            responsive: true,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: {
+                    callbacks: {
+                        title: () => '',
+                        label: (context) => context.dataset.label
+                    }
+                }
+            },
+            scales: {
+                y: { display: false },
+                x: { type: 'linear' }
+            }
+        };
+
+        // 1. Comma Density Chart
+        // Human: 1.10 ± 0.60 | AI: 0.72 ± 0.49
+        const ctxComma = document.getElementById('commaChart').getContext('2d');
+        const humanComma = generateNormalDist(1.10, 0.60, 0, 3);
+        const aiComma = generateNormalDist(0.72, 0.49, 0, 3);
+
+        // Input Value (Example: 0.5)
+        const inputValue = 0.5;
+
+        new Chart(ctxComma, {
+            type: 'line',
+            data: {
+                datasets: [
+                    {
+                        label: 'Human Distribution',
+                        data: humanComma,
+                        borderColor: '#3b82f6', // Blue
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        pointRadius: 0,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'AI Distribution',
+                        data: aiComma,
+                        borderColor: '#ef4444', // Red
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        fill: true,
+                        pointRadius: 0,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Your Input',
+                        data: [{ x: inputValue, y: 0 }, { x: inputValue, y: 0.8 }],
+                        borderColor: '#10b981', // Green
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        pointRadius: 0,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                ...commonOptions,
+                plugins: {
+                    annotation: {
+                        annotations: {
+                            line1: {
+                                type: 'line',
+                                xMin: inputValue,
+                                xMax: inputValue,
+                                borderColor: '#10b981',
+                                borderWidth: 2,
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // 2. Sentence Length Chart
+        // Human: 13.54 ± 5.67 | AI: 11.80 ± 2.75
+        const ctxSent = document.getElementById('sentChart').getContext('2d');
+        const humanSent = generateNormalDist(13.54, 5.67, 0, 30);
+        const aiSent = generateNormalDist(11.80, 2.75, 0, 30);
+
+        // Input Value (Example: 12.5)
+        const inputSent = 12.5;
+
+        new Chart(ctxSent, {
+            type: 'line',
+            data: {
+                datasets: [
+                    {
+                        label: 'Human',
+                        data: humanSent,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        pointRadius: 0,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'AI',
+                        data: aiSent,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        fill: true,
+                        pointRadius: 0,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Your Input',
+                        data: [{ x: inputSent, y: 0 }, { x: inputSent, y: 0.15 }],
+                        borderColor: '#10b981',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        pointRadius: 0
+                    }
+                ]
+            },
+            options: commonOptions
+        });
+
+        // 3. Score Distribution (Mockup)
+        const ctxScore = document.getElementById('scoreChart').getContext('2d');
+        const aiScoreDist = generateNormalDist(0.8, 0.1, 0, 1);
+        const humanScoreDist = generateNormalDist(0.2, 0.15, 0, 1);
+        const inputScore = 0.92;
+
+        new Chart(ctxScore, {
+            type: 'line',
+            data: {
+                datasets: [
+                    { label: 'Human Prob', data: humanScoreDist, borderColor: '#3b82f6', fill: true, pointRadius: 0, backgroundColor: 'rgba(59, 130, 246, 0.1)' },
+                    { label: 'AI Prob', data: aiScoreDist, borderColor: '#ef4444', fill: true, pointRadius: 0, backgroundColor: 'rgba(239, 68, 68, 0.1)' },
+                    { label: 'Your Text', data: [{ x: inputScore, y: 0 }, { x: inputScore, y: 4 }], borderColor: '#10b981', borderDash: [5, 5], borderWidth: 2, pointRadius: 0 }
+                ]
+            },
+            options: {
+                ...commonOptions,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { min: 0, max: 1, title: { display: true, text: 'AI Probability' } },
+                    y: { display: false }
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
