@@ -13,6 +13,7 @@ class AITextDetector {
     init() {
         this.bindElements();
         this.bindEvents();
+        this.loadCheckpoints();
     }
 
     bindElements() {
@@ -44,6 +45,7 @@ class AITextDetector {
         this.analyzeBtn.addEventListener('click', () => this.analyze());
         this.uploadBtn.addEventListener('click', () => this.fileInput.click());
         this.fileInput.addEventListener('change', (e) => this.handleFileUpload(e));
+        this.checkpointSelect.addEventListener('change', (e) => this.handleCheckpointChange(e));
 
         // Keyboard shortcut
         document.addEventListener('keydown', (e) => {
@@ -56,6 +58,59 @@ class AITextDetector {
         document.addEventListener('paragraphChartClick', (e) => {
             this.scrollToParagraph(e.detail.index);
         });
+    }
+
+    async loadCheckpoints() {
+        try {
+            const data = await api.getCheckpoints();
+            const checkpoints = data.checkpoints;
+
+            // Clear existing options
+            this.checkpointSelect.innerHTML = '';
+
+            if (checkpoints.length === 0) {
+                const option = document.createElement('option');
+                option.text = 'No checkpoints found';
+                this.checkpointSelect.add(option);
+                return;
+            }
+
+            // Add options
+            checkpoints.forEach(cp => {
+                const option = document.createElement('option');
+                option.value = cp;
+                option.text = cp;
+                this.checkpointSelect.add(option);
+            });
+
+            // Select first one and load it
+            if (checkpoints.length > 0) {
+                this.checkpointSelect.value = checkpoints[0];
+                await this.handleCheckpointChange({ target: { value: checkpoints[0] } });
+            }
+        } catch (error) {
+            console.error('Failed to load checkpoints:', error);
+            // Keep hardcoded options as fallback or show error
+        }
+    }
+
+    async handleCheckpointChange(e) {
+        const checkpointName = e.target.value;
+        try {
+            this.analyzeBtn.disabled = true;
+            this.analyzeBtn.textContent = 'Loading Model...';
+
+            await api.loadCheckpoint(checkpointName);
+
+            this.analyzeBtn.textContent = 'Analyze';
+            console.log(`Loaded model: ${checkpointName}`);
+        } catch (error) {
+            console.error('Failed to load model:', error);
+            alert(`모델 로드 실패: ${checkpointName}`);
+            this.analyzeBtn.textContent = 'Analyze';
+        } finally {
+            this.analyzeBtn.disabled = false;
+        }
     }
 
     handleFileUpload(e) {
