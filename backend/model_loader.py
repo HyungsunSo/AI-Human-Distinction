@@ -65,8 +65,13 @@ class ModelLoader:
                         self.model_name,
                         num_labels=2
                     )
-                    state_dict = torch.load(checkpoint_path, map_location=self.device)
-                    self.model.load_state_dict(state_dict)
+                    state_dict = torch.load(checkpoint_path, map_location=self.device, weights_only=False)
+                    
+                    # Handle nested state_dict (e.g., {'model_state_dict': ...})
+                    if isinstance(state_dict, dict) and 'model_state_dict' in state_dict:
+                        state_dict = state_dict['model_state_dict']
+                        
+                    self.model.load_state_dict(state_dict, strict=False)
             
             self.model.to(self.device)
             self.model.eval()
