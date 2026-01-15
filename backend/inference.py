@@ -122,8 +122,8 @@ class InferenceService:
                 'importance': float(importance[i])
             })
         
-        # Overall prediction
-        prediction = 'AI' if base_score > 0.5 else 'Human'
+        # Overall prediction (threshold lowered from 0.5 to 0.3 for more sensitive AI detection)
+        prediction = 'AI' if base_score > 0.3 else 'Human'
         
         return {
             'prediction': prediction,

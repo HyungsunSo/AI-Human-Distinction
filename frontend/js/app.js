@@ -240,13 +240,50 @@ class AITextDetector {
 
     highlightParagraphs(paragraphs) {
         const topIdx = this.currentResult?.top_paragraph?.index ?? -1;
+        const limeTokens = this.currentResult?.document_lime_tokens ?? [];
 
-        // Build highlighted paragraphs
+        // Build token score map
+        const tokenScores = new Map();
+        const maxScore = Math.max(...limeTokens.map(t => Math.abs(t.score)), 0.1);
+        limeTokens.forEach(t => {
+            const cleanWord = t.word.replace(/[.,!?;:'"()[\]{}]/g, '').toLowerCase();
+            if (cleanWord && Math.abs(t.score) > 0.005) {
+                tokenScores.set(cleanWord, t.score);
+            }
+        });
+
+        // Build highlighted paragraphs with LIME token highlighting
         const html = paragraphs.map((p, index) => {
             const probClass = this.getHighlightClass(p.ai_prob);
             const limeClass = index === topIdx ? 'lime-target' : '';
+
+            // Tokenize paragraph text and apply LIME highlighting
+            const words = p.text.split(/(\s+)/);
+            const highlightedText = words.map(word => {
+                if (/^\s+$/.test(word)) return word; // Keep whitespace
+
+                const cleanWord = word.replace(/[.,!?;:'"()[\]{}]/g, '').toLowerCase();
+                const score = tokenScores.get(cleanWord);
+
+                if (score !== undefined) {
+                    const normalizedScore = Math.abs(score) / maxScore;
+                    const bgOpacity = 0.15 + normalizedScore * 0.4;
+
+                    // AI (positive) = coral/red, Human (negative) = green
+                    const bgColor = score > 0
+                        ? `rgba(229, 80, 57, ${bgOpacity})`
+                        : `rgba(120, 224, 143, ${bgOpacity})`;
+                    const textColor = score > 0
+                        ? 'rgba(255, 138, 122, 0.95)'
+                        : 'rgba(142, 245, 176, 0.95)';
+
+                    return `<span class="lime-word" style="background: ${bgColor}; color: ${textColor}; font-weight: 500;" title="LIME: ${score.toFixed(3)}">${word}</span>`;
+                }
+                return word;
+            }).join('');
+
             return `<div class="para-highlight ${probClass} ${limeClass}" data-index="${index}">
-                <span class="para-prob">[${(p.ai_prob * 100).toFixed(0)}%]</span> ${this.escapeHtml(p.text)}
+                <span class="para-prob">[${(p.ai_prob * 100).toFixed(0)}%]</span> ${highlightedText}
             </div>`;
         }).join('');
 

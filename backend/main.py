@@ -95,6 +95,9 @@ async def analyze_text(request: AnalyzeRequest):
     top_para_text = doc_analysis['top_paragraph']['text']
     lime_analysis = lime_analyzer.full_analysis(top_para_text)
     
+    # Step 6: LIME analysis on full document (in original token order)
+    document_lime_tokens_raw = lime_analyzer.explain_text_in_order(text)
+    
     # Build response
     paragraphs = [
         ParagraphInfo(
@@ -117,6 +120,11 @@ async def analyze_text(request: AnalyzeRequest):
         for t in lime_analysis['lime_result']['tokens']
     ]
     
+    document_lime_tokens = [
+        LimeToken(word=t['word'], score=t['score'])
+        for t in document_lime_tokens_raw
+    ]
+    
     deletion_test = DeletionTest(
         original_prob=lime_analysis['deletion_test']['original_prob'],
         modified_prob=lime_analysis['deletion_test']['modified_prob'],
@@ -132,6 +140,7 @@ async def analyze_text(request: AnalyzeRequest):
         top_paragraph=top_paragraph,
         lime_result=LimeResult(tokens=lime_tokens),
         deletion_test=deletion_test,
+        document_lime_tokens=document_lime_tokens,
         meta_analysis=meta_analyzer.analyze(text)
     )
 

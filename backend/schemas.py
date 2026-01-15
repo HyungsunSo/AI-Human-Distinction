@@ -86,6 +86,7 @@ class AnalyzeResponse(BaseModel):
     top_paragraph: TopParagraph
     lime_result: LimeResult
     deletion_test: DeletionTest
+    document_lime_tokens: List[LimeToken]  # LIME tokens for entire document in original order
     meta_analysis: Optional[MetaAnalysisResult] = None
 
 

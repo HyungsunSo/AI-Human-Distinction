@@ -56,6 +56,47 @@ class LimeAnalyzer:
             'explanation': explanation  # Keep for deletion test
         }
     
+    def explain_text_in_order(self, text: str, num_features: int = 30, num_samples: int = 500) -> List[Dict]:
+        """
+        Generate LIME explanation with tokens in original text order
+        
+        Args:
+            text: Text to explain
+            num_features: Number of top features to analyze
+            num_samples: Number of perturbation samples
+            
+        Returns:
+            List of dicts with word and score, in original text order
+        """
+        # Generate LIME explanation
+        explanation = self.explainer.explain_instance(
+            text,
+            self._predict_proba_wrapper,
+            num_features=num_features,
+            num_samples=num_samples
+        )
+        
+        # Build word -> score map from LIME results
+        score_map = {}
+        for word, score in explanation.as_list():
+            score_map[word.lower()] = float(score)
+        
+        # Split text preserving original order
+        import re
+        words = re.split(r'(\s+)', text)
+        
+        result = []
+        for word in words:
+            if word.strip():  # Skip pure whitespace
+                clean_word = re.sub(r'[.,!?;:\'"()[\]{}]', '', word).lower()
+                score = score_map.get(clean_word, 0.0)
+                result.append({
+                    'word': word,
+                    'score': score
+                })
+        
+        return result
+    
     def deletion_test(self, text: str, lime_result: Dict, top_k: int = 5) -> Dict:
         """
         Deletion test: Remove top AI-indicating tokens and measure probability change
